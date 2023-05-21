@@ -6,7 +6,7 @@ import {  DownOutlined,
           TeamOutlined,
           UserOutlined,} from '@ant-design/icons';
 import { Button, Dropdown, Layout, Menu} from 'antd';
-import { useNavigate } from "react-router-dom";
+import { useNavigate,} from "react-router-dom";
 import "./Dashboard.css";
 
 const {  Sider } = Layout;
@@ -22,9 +22,9 @@ const Dashboard = (props) => {
   
   const menuSiderBar = [
     {
-      key: '/adminUser',
+      key: '/dashboard/admin-user',
       icon: <TeamOutlined />,
-      label: 'AdminUser',
+      label: 'Admin-user'
     },
     {
       key: '/aboutpage',
@@ -99,6 +99,9 @@ const Dashboard = (props) => {
 
         <div className="mainBody">
           {props.children}
+          {/* <main>
+            <Outlet/>
+          </main> */}
         </div>
       </Layout>
     </Layout>
