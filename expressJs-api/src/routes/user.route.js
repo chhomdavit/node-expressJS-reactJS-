@@ -16,9 +16,9 @@ const controller = require ('../controllers/user.controller');
 
 const user = (app) =>{
     app.get("/api/user/getList",controller.getList);
-    app.get("/api/user/getOne/:id",controller.getOne);
-    app.post("/api/user/create",upload.single("image_avarta"),controller.create);
-    app.put("/api/user/update",controller.update);
+    app.post("/api/user/create",upload.single("adminUser_avarta"),controller.create);
+    app.post("/api/user/login",controller.login);
+    app.put("/api/user/update",upload.single("adminUser_avarta"),controller.update);
     app.delete("/api/user/remove/:id",controller.remove);
 }
 module.exports = user;

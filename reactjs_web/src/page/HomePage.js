@@ -1,9 +1,14 @@
 import React from 'react';
+import CarouselSwiper from '../component/carousel-swiper/CarouselSwiper';
+import ProductPage from '../component/product/ProductPage';
+import { Divider } from 'antd';
 
 const HomePage = () => {
   return (
-    <div>
-      <h1>davit</h1>
+    <div className="container">
+      <CarouselSwiper/>
+      <Divider/>
+      <ProductPage/>
     </div>
   )
 }

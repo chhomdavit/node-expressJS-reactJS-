@@ -16,6 +16,11 @@ app.get('/', (req, res) => {
 })
 
 require("./src/routes/user.route")(app)
+require("./src/routes/category.route")(app)
+require("./src/routes/product.route")(app)
+require("./src/routes/carouselSwiper.route")(app)
+require("./src/routes/customerUser.route")(app)
+require("./src/routes/cart.route")(app)
 
 const port = 8080
 app.listen(port, () => {

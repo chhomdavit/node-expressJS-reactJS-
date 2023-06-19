@@ -1,49 +1,26 @@
 const db = require('../config/db.config');
-const isEmptyOrNull = require("../util/service");
+const {isEmptyOrNull} = require("../util/service");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken")
+require('dotenv').config();
+
+
 
 const getList = (req,res) =>{
-    var sqlSelect = "SELECT * FROM user "
-        sqlSelect +="ORDER BY user_id DESC "
+    var sqlSelect = "SELECT * FROM admin_user"
     db.query(sqlSelect,(error,results)=>{
         res.json({
-            data_user : results
+            data_admin_user : results
         })
     })
 }
 
-const getOne = (req,res) =>{
-    var {id} = req.params
-    if(isEmptyOrNull(id)){
-        res.json({
-            error: true,
-            message: {
-                id: "Please fill in params id"
-            }
-        })
-    }
-    var sqlSelect = "SELECT * FROM user WHERE `user_id`=?";
-    db.query(sqlSelect,[id],(error,results)=>{
-        if(error){
-            res.json({
-                error: true,
-                message: error
-            })
-        }else{
-            res.json({
-                data_user: results
-            })
-        }
-    })
-}
 
 const create = (req,res) =>{
-    var {firstname,lastname,gender,dob,userEmail,password,status} = req.body
+    var {firstname, lastname, gender, dob, userEmail, password, adminUser_avarta, status, create_at} = req.body
     var message= {}
     if(isEmptyOrNull(firstname)){
         message.firstname = "please fill in firstname !"
-    }
-    if(isEmptyOrNull(lastname)){
-        message.lastname = "please fill in lastname !"
     }
     if(isEmptyOrNull(lastname)){
         message.lastname = "please fill in lastname !"
@@ -61,12 +38,14 @@ const create = (req,res) =>{
         })
         return
     }
-    var image_avarta = null
+    var adminUser_avarta = null
     if(req.file){
-        image_avarta = req.file.filename
+        adminUser_avarta = req.file.filename
     }
-    var sqlInsert = "INSERT INTO `user`(`firstname`,`lastname`,`gender`,`dob`,`userEmail`,`password`,`image_avarta`,`status`) VALUES (?,?,?,?,?,?,?,?)";
-    var paramSql = [firstname,lastname,gender,dob,userEmail,password,image_avarta,status]
+    
+    var password = bcrypt.hashSync(password,10)
+    var sqlInsert = "INSERT INTO `admin_user`( `firstname`, `lastname`, `gender`, `dob`, `userEmail`, `password`, `adminUser_avarta`, `status`, `create_at`) VALUES (?,?,?,?,?,?,?,?,?)";
+    var paramSql = [firstname, lastname, gender, dob, userEmail, password, adminUser_avarta, status, create_at]
     db.query(sqlInsert,paramSql,(error,results)=>{
         if(error){
             res.json({
@@ -82,9 +61,58 @@ const create = (req,res) =>{
     })  
 }
 
+const login = (req,res) =>{
+    var { userEmail, password } = req.body;
+    var message = {}
+
+    if (isEmptyOrNull(userEmail)) {
+        message.userEmail = "please fill in userEmail !"
+    }
+    if (isEmptyOrNull(password)) {
+        message.password = "please fill in password !"
+    }
+    db.query("SELECT * FROM `admin_user` WHERE userEmail = ?",[userEmail], (error, results) => {
+        if (error) {
+            res.json({
+                error: true,
+                message: error
+            })
+        } else {
+            if (results.length == 0) {
+                res.json({
+                    error: true,
+                    message: "User dose not exist. Please register!"
+                })
+            } else {
+                var data = results[0]
+                var passwordInDb = data.password
+                var isCorrectPassword = bcrypt.compareSync(password, passwordInDb)
+                if (isCorrectPassword) {
+                    delete data.password;
+                    var token = jwt.sign({profile:data},process.env.KEY_ACCESS_TOKEN)
+                    res.json({
+                        is_login : true,
+                        message : "Login success!",
+                        profile : data,
+                        token : token
+                    })
+                } else {
+                    res.json({
+                        error: true,
+                        message: "Incorrect password"
+                    })
+                }
+            }
+        }
+    })
+}
+
 const update = (req,res) =>{
-    var {firstname,lastname,gender,dob,userEmail,password,image_avarta,status,user_id} = req.body
-    var message= {}
+    var{admin_user_id, firstname, lastname, gender, dob, userEmail, password, adminUser_avarta, status, create_at} =req.body
+    var message = {}
+    if(isEmptyOrNull(admin_user_id)){
+        message.admin_user_id = "please fill in admin_user_id !"
+    }
     if(isEmptyOrNull(firstname)){
         message.firstname = "please fill in firstname !"
     }
@@ -104,9 +132,13 @@ const update = (req,res) =>{
         })
         return
     }
-    var sqlUpdate = "UPDATE `user` SET `firstname`=?,`lastname`=?,`gender`=?,`dob`=?,`userEmail`=?,`password`=?,`image_avarta`=?,`status`=? WHERE `user_id`=?";
-    var paramSql = [firstname,lastname,gender,dob,userEmail,password,image_avarta,status,user_id]
-    db.query(sqlUpdate,paramSql,(error,results)=>{
+    var adminUser_avarta = null
+    if(req.file){
+        adminUser_avarta = req.file.filename
+    }
+    var sqlUpdat="UPDATE `admin_user` SET `firstname`=?,`lastname`=?,`gender`=?,`dob`=?,`userEmail`=?,`password`=?,`adminUser_avarta`=IFNULL(?,adminUser_avarta),`status`=?,`create_at`=? WHERE `admin_user_id`=?"
+    var paramSql=[firstname, lastname, gender, dob, userEmail, password, adminUser_avarta, status, create_at,admin_user_id]
+    db.query(sqlUpdat,paramSql,(error,results)=>{
         if(error){
             res.json({
                 error: true,
@@ -114,41 +146,37 @@ const update = (req,res) =>{
             })
         }else{
             res.json({
-                message : "User update !!",
-                data_user: results
+                message: "admin_user update success"
             })
-        }
-    })  
-}
-
-const remove = (req,res) =>{
-    var id = req.params.id
-    var sqlDelete = "DELETE FROM `user` WHERE user_id = "
-    db.query(sqlDelete + id,(error,results)=>{
-        if(error){
-            res.json({
-                error: true,
-                message: error
-            })
-        }else{
-            if(results.affectedRows !=0){
-                res.json({
-                    message : "Customer Deleted!",
-                    data_user : results
-                })
-            }else{
-                res.json({
-                    message: "Delete not complete",
-                    data_user: results
-                })
-            }
         }
     })
 }
+
+const remove = (req,res) =>{ 
+   db.query("DELETE FROM `admin_user` WHERE admin_user_id ="+req.params.id,(error,results)=>{
+    if(error){
+        res.json({
+            error: true,
+            message: error
+        })
+    }else{
+        if(results.affectedRows !=0){
+            res.json({
+                message: "Deleted",
+                data:results
+            })
+        }else{
+            res.json({
+                message: "Delete not complete"
+            })
+        }
+    }
+   })
+}
 module.exports = {
     getList,
-    getOne,
     create,
     update,
     remove,
+    login,
 }
